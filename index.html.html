@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>음악 설문 플랫폼</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        .survey-section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .chart-section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            text-align: center;
+            font-size: 28px;
+        }
+
+        .question-block {
+            margin-bottom: 30px;
+        }
+
+        .question-block:last-child {
+            margin-bottom: 0;
+        }
+
+        .question-title {
+            color: #667eea;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        button {
+            padding: 12px 24px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background: #764ba2;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .answer-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .tag {
+            background: #f0f0f0;
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .tag button {
+            background: none;
+            color: #999;
+            padding: 0;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            padding: 0 4px;
+        }
+
+        .tag button:hover {
+            color: #333;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .stats {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .chart-container {
+            position: relative;
+            margin-bottom: 30px;
+        }
+
+        .chart-container h2 {
+            color: #333;
+            font-size: 18px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .chart-canvas {
+            max-height: 300px;
+        }
+
+        .reset-button {
+            width: 100%;
+            background: #ff6b6b;
+            margin-top: 20px;
+        }
+
+        .reset-button:hover {
+            background: #ee5a52;
+        }
+
+        .stats-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .stats-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #999;
+            padding: 40px 20px;
+            font-size: 14px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 설문 섹션 -->
+        <div class="survey-section">
+            <h1>🎵 음악 설문 플랫폼</h1>
+
+            <!-- 질문 1 -->
+            <div class="question-block">
+                <div class="question-title">질문 1: 좋아하는 음악 장르는 어떻게 되나요?</div>
+                <div class="input-group">
+                    <input type="text" id="genreInput" placeholder="음악 장르를 입력하세요..." />
+                    <button onclick="addGenre()">추가</button>
+                </div>
+                <div class="answer-tags" id="genreTags"></div>
+            </div>
+
+            <!-- 질문 2 -->
+            <div class="question-block">
+                <div class="question-title">질문 2: 좋아하는 가수는 누구인가요?</div>
+                <div class="input-group">
+                    <input type="text" id="artistInput" placeholder="가수 이름을 입력하세요..." />
+                    <button onclick="addArtist()">추가</button>
+                </div>
+                <div class="answer-tags" id="artistTags"></div>
+            </div>
+
+            <!-- 통계 -->
+            <div class="stats">
+                <div class="stats-row">
+                    <span>총 응답 수:</span>
+                    <strong id="totalResponses">0</strong>
+                </div>
+                <div class="stats-row">
+                    <span>등록된 장르:</span>
+                    <strong id="genreCount">0</strong>
+                </div>
+                <div class="stats-row">
+                    <span>등록된 가수:</span>
+                    <strong id="artistCount">0</strong>
+                </div>
+            </div>
+
+            <button class="reset-button" onclick="resetData()">데이터 초기화</button>
+        </div>
+
+        <!-- 차트 섹션 -->
+        <div class="chart-section">
+            <h1>📊 실시간 통계</h1>
+
+            <!-- 장르 차트 -->
+            <div class="chart-container">
+                <h2>음악 장르 분포</h2>
+                <div class="chart-canvas">
+                    <canvas id="genreChart"></canvas>
+                </div>
+                <div id="genreEmpty" class="empty-state">아직 장르 데이터가 없습니다</div>
+            </div>
+
+            <!-- 가수 차트 -->
+            <div class="chart-container">
+                <h2>가수 선호도</h2>
+                <div class="chart-canvas">
+                    <canvas id="artistChart"></canvas>
+                </div>
+                <div id="artistEmpty" class="empty-state">아직 가수 데이터가 없습니다</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let genreChart = null;
+        let artistChart = null;
+
+        // localStorage에서 데이터 불러오기
+        function loadData() {
+            const genres = JSON.parse(localStorage.getItem('genres')) || {};
+            const artists = JSON.parse(localStorage.getItem('artists')) || {};
+            return { genres, artists };
+        }
+
+        // localStorage에 데이터 저장
+        function saveData(genres, artists) {
+            localStorage.setItem('genres', JSON.stringify(genres));
+            localStorage.setItem('artists', JSON.stringify(artists));
+        }
+
+        // 장르 추가
+        function addGenre() {
+            const input = document.getElementById('genreInput');
+            const genre = input.value.trim();
+
+            if (!genre) {
+                alert('장르를 입력해주세요');
+                return;
+            }
+
+            const { genres, artists } = loadData();
+            genres[genre] = (genres[genre] || 0) + 1;
+            saveData(genres, artists);
+            input.value = '';
+
+            updateUI();
+        }
+
+        // 가수 추가
+        function addArtist() {
+            const input = document.getElementById('artistInput');
+            const artist = input.value.trim();
+
+            if (!artist) {
+                alert('가수 이름을 입력해주세요');
+                return;
+            }
+
+            const { genres, artists } = loadData();
+            artists[artist] = (artists[artist] || 0) + 1;
+            saveData(genres, artists);
+            input.value = '';
+
+            updateUI();
+        }
+
+        // 장르 제거
+        function removeGenre(genre) {
+            const { genres, artists } = loadData();
+            if (genres[genre]) {
+                genres[genre]--;
+                if (genres[genre] <= 0) {
+                    delete genres[genre];
+                }
+            }
+            saveData(genres, artists);
+            updateUI();
+        }
+
+        // 가수 제거
+        function removeArtist(artist) {
+            const { genres, artists } = loadData();
+            if (artists[artist]) {
+                artists[artist]--;
+                if (artists[artist] <= 0) {
+                    delete artists[artist];
+                }
+            }
+            saveData(genres, artists);
+            updateUI();
+        }
+
+        // UI 업데이트
+        function updateUI() {
+            const { genres, artists } = loadData();
+
+            // 태그 업데이트
+            updateTags('genreTags', genres, 'removeGenre');
+            updateTags('artistTags', artists, 'removeArtist');
+
+            // 통계 업데이트
+            const totalResponses = Object.values(genres).reduce((a, b) => a + b, 0) +
+                                    Object.values(artists).reduce((a, b) => a + b, 0);
+            document.getElementById('totalResponses').textContent = totalResponses;
+            document.getElementById('genreCount').textContent = Object.keys(genres).length;
+            document.getElementById('artistCount').textContent = Object.keys(artists).length;
+
+            // 차트 업데이트
+            updateCharts(genres, artists);
+        }
+
+        // 태그 업데이트
+        function updateTags(elementId, data, removeFunction) {
+            const container = document.getElementById(elementId);
+            container.innerHTML = '';
+
+            Object.entries(data).forEach(([name, count]) => {
+                const tag = document.createElement('div');
+                tag.className = 'tag';
+                tag.innerHTML = `
+                    ${name} <span style="color: #667eea; font-weight: 600;">(${count})</span>
+                    <button onclick="${removeFunction}('${name.replace(/'/g, "\\'")}')">✕</button>
+                `;
+                container.appendChild(tag);
+            });
+        }
+
+        // 차트 업데이트
+        function updateCharts(genres, artists) {
+            updateGenreChart(genres);
+            updateArtistChart(artists);
+        }
+
+        // 장르 차트 업데이트
+        function updateGenreChart(genres) {
+            const ctx = document.getElementById('genreChart');
+            const emptyState = document.getElementById('genreEmpty');
+
+            if (Object.keys(genres).length === 0) {
+                ctx.style.display = 'none';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            ctx.style.display = 'block';
+            emptyState.style.display = 'none';
+
+            const data = {
+                labels: Object.keys(genres),
+                datasets: [{
+                    label: '선택 횟수',
+                    data: Object.values(genres),
+                    backgroundColor: [
+                        '#667eea', '#764ba2', '#f093fb', '#4facfe', '#00f2fe',
+                        '#43e97b', '#fa709a', '#fee140', '#30b0fe', '#feca57'
+                    ],
+                    borderColor: '#fff',
+                    borderWidth: 2
+                }]
+            };
+
+            if (genreChart) {
+                genreChart.data = data;
+                genreChart.update();
+            } else {
+                genreChart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: data,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    padding: 15,
+                                    font: { size: 13 }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // 가수 차트 업데이트
+        function updateArtistChart(artists) {
+            const ctx = document.getElementById('artistChart');
+            const emptyState = document.getElementById('artistEmpty');
+
+            if (Object.keys(artists).length === 0) {
+                ctx.style.display = 'none';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            ctx.style.display = 'block';
+            emptyState.style.display = 'none';
+
+            // 내림차순 정렬
+            const sorted = Object.entries(artists).sort((a, b) => b[1] - a[1]);
+
+            const data = {
+                labels: sorted.map(item => item[0]),
+                datasets: [{
+                    label: '선택 횟수',
+                    data: sorted.map(item => item[1]),
+                    backgroundColor: '#764ba2',
+                    borderColor: '#fff',
+                    borderWidth: 2
+                }]
+            };
+
+            if (artistChart) {
+                artistChart.data = data;
+                artistChart.update();
+            } else {
+                artistChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: data,
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            x: {
+                                beginAtZero: true,
+                                ticks: {
+                                    stepSize: 1
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // 데이터 초기화
+        function resetData() {
+            if (confirm('모든 데이터를 초기화하시겠습니까?')) {
+                localStorage.removeItem('genres');
+                localStorage.removeItem('artists');
+                updateUI();
+            }
+        }
+
+        // 엔터키로 추가
+        document.getElementById('genreInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') addGenre();
+        });
+
+        document.getElementById('artistInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') addArtist();
+        });
+
+        // 초기 로드
+        updateUI();
+    </script>
+</body>
+</html>
